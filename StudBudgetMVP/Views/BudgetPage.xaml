@@ -1,0 +1,12 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:StudBudgetMVP.ViewModels"
+             x:Class="StudBudgetMVP.Views.BudgetPage"
+             Title="Budget">
+    <StackLayout Padding="20">
+        <DatePicker Date="{Binding Date}" />
+        <Button Text="Calculate" Command="{Binding CalculateCommand}" />
+        <Label Text="Income: {Binding Summary.Income}" />
+        <Label Text="Expense: {Binding Summary.Expense}" />
+    </StackLayout>
+</ContentPage>

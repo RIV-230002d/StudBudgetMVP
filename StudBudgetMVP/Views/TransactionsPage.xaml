@@ -1,0 +1,24 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:StudBudgetMVP.ViewModels"
+             x:Class="StudBudgetMVP.Views.TransactionsPage"
+             Title="Transactions">
+    <StackLayout Padding="10">
+        <Entry Placeholder="Category" Text="{Binding Category}" />
+        <Entry Placeholder="Amount" Keyboard="Numeric" Text="{Binding Amount}" />
+        <Button Text="Add" Command="{Binding AddCommand}" />
+        <CollectionView ItemsSource="{Binding Transactions}"
+                    SelectionMode="Single"
+                    SelectedItem="{Binding Selected}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal" Padding="5">
+                        <Label Text="{Binding Category}" />
+                        <Label Text="{Binding Amount}" HorizontalOptions="EndAndExpand" />
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="Delete Selected" Command="{Binding DeleteCommand}" />
+    </StackLayout>
+</ContentPage>
