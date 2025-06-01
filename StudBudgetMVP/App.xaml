@@ -1,8 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:StudBudgetMVP.Converters"
              x:Class="StudBudgetMVP.App">
+
     <Application.Resources>
-        <!-- Общие стили -->
+        <ResourceDictionary>
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

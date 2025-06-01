@@ -1,54 +1,85 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using StudBudgetMVP.Services;
 using StudBudgetMVP.Models;
+using StudBudgetMVP.Services;
+using System;
 using System.Collections.ObjectModel;
-using Microsoft.Maui.Controls;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Maui.Storage;
 
 namespace StudBudgetMVP.ViewModels;
+
 public partial class TransactionsViewModel : ObservableObject
 {
-    [ObservableProperty] public int userId;
-    [ObservableProperty] public string category;
-    [ObservableProperty] public decimal amount;
-    public ObservableCollection<Transaction> Transactions { get; } = new();
+    private readonly IDataService dataService;
 
     public TransactionsViewModel(IDataService ds)
     {
-        Service = ds;
-        UserId = Preferences.Get("userId", 0);
-        LoadCommand = new AsyncRelayCommand(LoadAsync);
-        AddCommand = new AsyncRelayCommand(AddAsync);
-        DeleteCommand = new AsyncRelayCommand(DeleteAsync);
+        dataService = ds;
+        Transactions = new ObservableCollection<Transaction>();
+        Categories = new ObservableCollection<Category>();
+        AddCommand = new AsyncRelayCommand(AddTransactionAsync);
+        DeleteCommand = new AsyncRelayCommand(DeleteTransactionAsync);
     }
 
-    public IDataService Service { get; }
-    public IAsyncRelayCommand LoadCommand { get; }
+    public ObservableCollection<Transaction> Transactions { get; }
+    public ObservableCollection<Category> Categories { get; }
+
+    [ObservableProperty]
+    private Category selectedCategory;
+
+    [ObservableProperty]
+    private decimal amount;
+
+    [ObservableProperty]
+    private Transaction selectedTransaction;
+
     public IAsyncRelayCommand AddCommand { get; }
     public IAsyncRelayCommand DeleteCommand { get; }
 
-    async Task LoadAsync()
+    public async Task LoadAsync()
     {
-        var list = await Service.GetTransactionsAsync(UserId);
+        var userId = Preferences.Get("userId", 0);
+        var now = DateTime.Now;
+
+        var cats = await dataService.GetCategoriesAsync(userId);
+        Categories.Clear();
+        foreach (var cat in cats)
+            Categories.Add(cat);
+
+        var txs = await dataService.GetTransactionsAsync(userId, now.Year, now.Month);
         Transactions.Clear();
-        foreach (var tx in list) Transactions.Add(tx);
+        foreach (var tx in txs)
+            Transactions.Add(tx);
     }
 
-    async Task AddAsync()
+    private async Task AddTransactionAsync()
     {
-        var tx = new Transaction { UserId = UserId, Category = Category, Amount = Amount, Date = DateTime.Now };
-        await Service.AddTransactionAsync(tx);
+        if (SelectedCategory == null || Amount == 0)
+            return;
+
+        var userId = Preferences.Get("userId", 0);
+
+        var tx = new Transaction
+        {
+            UserId = userId,
+            CategoryId = SelectedCategory.Id,
+            Amount = Amount,
+            Date = DateTime.Now
+        };
+
+        await dataService.AddTransactionAsync(tx);
+        Amount = 0;
         await LoadAsync();
     }
 
-    async Task DeleteAsync()
+    private async Task DeleteTransactionAsync()
     {
-        if (Selected != null)
-        {
-            await Service.DeleteTransactionAsync(Selected.Id);
-            await LoadAsync();
-        }
-    }
+        if (SelectedTransaction == null)
+            return;
 
-    [ObservableProperty] Transaction selected;
+        await dataService.DeleteTransactionAsync(SelectedTransaction.Id);
+        await LoadAsync();
+    }
 }

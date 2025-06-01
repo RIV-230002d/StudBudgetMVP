@@ -1,12 +1,46 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:StudBudgetMVP.ViewModels"
              x:Class="StudBudgetMVP.Views.BudgetPage"
              Title="Budget">
-    <StackLayout Padding="20">
-        <DatePicker Date="{Binding Date}" />
-        <Button Text="Calculate" Command="{Binding CalculateCommand}" />
-        <Label Text="Income: {Binding Summary.Income}" />
-        <Label Text="Expense: {Binding Summary.Expense}" />
-    </StackLayout>
+	<ScrollView>
+		<VerticalStackLayout Padding="20" Spacing="15">
+
+			<Label Text="Add Category:" FontAttributes="Bold"/>
+			<Entry Placeholder="Name" Text="{Binding NewCategoryName}" />
+			<StackLayout Orientation="Horizontal" Spacing="10">
+				<Label Text="Is Income:"/>
+				<Switch IsToggled="{Binding NewIsIncome}" />
+			</StackLayout>
+			<Entry Placeholder="Limit (for expense)" Text="{Binding NewLimit}" Keyboard="Numeric" IsEnabled="{Binding NewIsIncome, Converter={StaticResource InverseBoolConverter}}" />
+
+			<Button Text="Add" Command="{Binding AddCommand}" />
+
+			<Label Text="Categories:" FontAttributes="Bold" />
+			<CollectionView ItemsSource="{Binding Categories}" SelectionMode="Single"
+                            SelectedItem="{Binding SelectedCategory}">
+				<CollectionView.ItemTemplate>
+					<DataTemplate>
+						<Frame BorderColor="Gray" Padding="5">
+							<VerticalStackLayout>
+								<Label Text="{Binding Name}" FontAttributes="Bold"/>
+								<Label Text="{Binding IsIncome, StringFormat='Type: {0}'}"/>
+								<Label Text="{Binding Limit, StringFormat='Limit: {0:C}'}"/>
+							</VerticalStackLayout>
+						</Frame>
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+
+			<Button Text="Delete" Command="{Binding DeleteCommand}" IsEnabled="{Binding SelectedCategory}" />
+
+			<Label Text="Overspent Categories:" FontAttributes="Bold"/>
+			<CollectionView ItemsSource="{Binding OverspentCategories}">
+				<CollectionView.ItemTemplate>
+					<DataTemplate>
+						<Label Text="{Binding}" TextColor="Red" />
+					</DataTemplate>
+				</CollectionView.ItemTemplate>
+			</CollectionView>
+		</VerticalStackLayout>
+	</ScrollView>
 </ContentPage>
