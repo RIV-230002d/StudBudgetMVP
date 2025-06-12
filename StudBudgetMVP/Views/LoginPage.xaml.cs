@@ -2,17 +2,19 @@
 using StudBudgetMVP.Services;
 using StudBudgetMVP.ViewModels;
 using System.IO;
-using Microsoft.Maui.Storage;
 
-namespace StudBudgetMVP.Views;
-
-public partial class LoginPage : ContentPage
+namespace StudBudgetMVP.Views
 {
-    public LoginPage()
+    public partial class LoginPage : ContentPage
     {
-        InitializeComponent();
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
-        var vm = new LoginViewModel(new SqliteDataService(dbPath));
-        BindingContext = vm;
+        public LoginPage()
+        {
+            InitializeComponent();
+
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
+            var ds = new SqliteDataService(dbPath);
+
+            BindingContext = new LoginViewModel(ds, Navigation);
+        }
     }
 }

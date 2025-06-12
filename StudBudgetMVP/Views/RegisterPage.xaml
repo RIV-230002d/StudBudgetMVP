@@ -1,11 +1,11 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:StudBudgetMVP.ViewModels"
              x:Class="StudBudgetMVP.Views.RegisterPage"
-             Title="Register">
-    <StackLayout Padding="20" VerticalOptions="Center">
-        <Entry Placeholder="Username" Text="{Binding Username}" />
-        <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
-        <Button Text="Register" Command="{Binding RegisterCommand}" />
-    </StackLayout>
+             Title="Регистрация">
+	<VerticalStackLayout Padding="30" Spacing="15">
+		<Entry Placeholder="Логин"  Text="{Binding Username}" />
+		<Entry Placeholder="Пароль" IsPassword="True" Text="{Binding Password}" />
+		<Button Text="Создать аккаунт" Command="{Binding RegisterCommand}" />
+		<Button Text="Назад к входу"   Command="{Binding GoLoginCommand}" />
+	</VerticalStackLayout>
 </ContentPage>

@@ -1,27 +1,46 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using StudBudgetMVP.Services;
 using Microsoft.Maui.Controls;
+using StudBudgetMVP.Services;
+using System.Threading.Tasks;
 
-namespace StudBudgetMVP.ViewModels;
-public partial class RegisterViewModel : ObservableObject
+namespace StudBudgetMVP.ViewModels
 {
-    [ObservableProperty] string username;
-    [ObservableProperty] string password;
-    private readonly IDataService ds;
-
-    public RegisterViewModel(IDataService dataService)
+    public partial class RegisterViewModel : ObservableObject
     {
-        ds = dataService;
-        RegisterCommand = new AsyncRelayCommand(RegisterAsync);
-    }
+        private readonly IDataService data;
+        private readonly INavigation navigation;
 
-    public IAsyncRelayCommand RegisterCommand { get; }
+        public RegisterViewModel(IDataService ds, INavigation nav)
+        {
+            data = ds;
+            navigation = nav;
 
-    async Task RegisterAsync()
-    {
-        var ok = await ds.RegisterAsync(Username, Password);
-        var msg = ok ? "Регистрация прошла" : "Пользователь существует";
-        await Application.Current.MainPage.DisplayAlert("СтудБюджет", msg, "OK");
+            RegisterCommand = new AsyncRelayCommand(RegisterAsync);
+        }
+
+        [ObservableProperty] private string username;
+        [ObservableProperty] private string password;
+
+        public IAsyncRelayCommand RegisterCommand { get; }
+
+        private async Task RegisterAsync()
+        {
+            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Enter user & pass", "OK");
+                return;
+            }
+
+            var ok = await data.RegisterAsync(Username.Trim(), Password);
+            if (!ok)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "User exists", "OK");
+                return;
+            }
+
+            await Application.Current.MainPage.DisplayAlert("Success", "Account created", "OK");
+            await navigation.PopAsync();               // возвращаемся к LoginPage
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Maui.Controls;
-using StudBudgetMVP.ViewModels;
+using Microsoft.Maui.Storage;
 using StudBudgetMVP.Services;
+using StudBudgetMVP.ViewModels;
 using System.IO;
 
 namespace StudBudgetMVP.Views;
@@ -12,14 +13,16 @@ public partial class BudgetPage : ContentPage
     public BudgetPage()
     {
         InitializeComponent();
+
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
         vm = new BudgetViewModel(new SqliteDataService(dbPath));
+
         BindingContext = vm;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await vm.LoadCategoriesAsync();
+        await vm.LoadAsync();
     }
 }

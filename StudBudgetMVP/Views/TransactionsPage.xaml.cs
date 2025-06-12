@@ -1,25 +1,28 @@
 ﻿using Microsoft.Maui.Controls;
-using StudBudgetMVP.ViewModels;
 using StudBudgetMVP.Services;
+using StudBudgetMVP.ViewModels;
 using System.IO;
 
-namespace StudBudgetMVP.Views;
-
-public partial class TransactionsPage : ContentPage
+namespace StudBudgetMVP.Views
 {
-    private readonly TransactionsViewModel vm;
-
-    public TransactionsPage()
+    public partial class TransactionsPage : ContentPage
     {
-        InitializeComponent();
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
-        vm = new TransactionsViewModel(new SqliteDataService(dbPath));
-        BindingContext = vm;
-    }
+        private readonly TransactionsViewModel vm;
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-        await vm.LoadAsync();
+        public TransactionsPage()
+        {
+            InitializeComponent();
+
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
+            vm = new TransactionsViewModel(new SqliteDataService(dbPath));
+
+            BindingContext = vm;
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await vm.LoadAsync();
+        }
     }
 }

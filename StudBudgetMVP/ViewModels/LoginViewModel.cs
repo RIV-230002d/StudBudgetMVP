@@ -1,35 +1,48 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using StudBudgetMVP.Services;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Storage;
+using StudBudgetMVP.Services;
+using System.Threading.Tasks;
 
-namespace StudBudgetMVP.ViewModels;
-public partial class LoginViewModel : ObservableObject
+namespace StudBudgetMVP.ViewModels
 {
-    [ObservableProperty] string username;
-    [ObservableProperty] string password;
-    private readonly IDataService ds;
-
-    public LoginViewModel(IDataService dataService)
+    public partial class LoginViewModel : ObservableObject
     {
-        ds = dataService;
-        LoginCommand = new AsyncRelayCommand(LoginAsync);
-        NavigateRegisterCommand = new RelayCommand(async () =>
-            await Shell.Current.GoToAsync(nameof(Views.RegisterPage)));
-    }
+        private readonly IDataService data;
 
-    public IAsyncRelayCommand LoginCommand { get; }
-    public IRelayCommand NavigateRegisterCommand { get; }
+        public LoginViewModel(IDataService ds, INavigation nav)
+        {
+            data = ds;
+            navigation = nav;
 
-    async Task LoginAsync()
-    {
-        var user = await ds.LoginAsync(Username, Password);
-        if (user != null)
-            await Shell.Current.GoToAsync($"//TransactionsPage?userId={user.Id}");
-        else
-            await Application.Current.MainPage.DisplayAlert("Ошибка", "Неверные данные", "OK");
-        Preferences.Set("userId", user.Id);
-        await Shell.Current.GoToAsync("//TransactionsPage");
+            LoginCommand = new AsyncRelayCommand(LoginAsync);
+            GoRegisterCommand = new AsyncRelayCommand(OpenRegisterAsync);
+        }
+
+        [ObservableProperty] private string username;
+        [ObservableProperty] private string password;
+
+        public IAsyncRelayCommand LoginCommand { get; }
+        public IAsyncRelayCommand GoRegisterCommand { get; }
+
+        // ————— private —————
+        private readonly INavigation navigation;
+
+        private async Task LoginAsync()
+        {
+            var user = await data.LoginAsync(Username?.Trim(), Password);
+            if (user is null)
+            {
+                await Application.Current.MainPage.DisplayAlert("Login failed", "Wrong credentials", "OK");
+                return;
+            }
+
+            Preferences.Set("userId", user.Id);
+            Application.Current.MainPage = new AppShell();       // теперь внутри Shell
+        }
+
+        private Task OpenRegisterAsync()
+            => navigation.PushAsync(new Views.RegisterPage());   // навигация через NavigationPage
     }
 }

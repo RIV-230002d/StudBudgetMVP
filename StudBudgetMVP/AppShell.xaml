@@ -3,6 +3,25 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:views="clr-namespace:StudBudgetMVP.Views"
        x:Class="StudBudgetMVP.AppShell">
-    <ShellContent Title="Transactions" ContentTemplate="{DataTemplate views:TransactionsPage}" />
-    <ShellContent Title="Budget" ContentTemplate="{DataTemplate views:BudgetPage}" />
+
+    <!-- =========== ОСНОВНОЕ МЕНЮ =========== -->
+    <FlyoutItem Title="Транзакции"
+                FlyoutDisplayOptions="AsMultipleItems">
+        <ShellContent Title="Транзакции"
+                      ContentTemplate="{DataTemplate views:TransactionsPage}"
+                      Route="transactions" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Бюджет"
+                FlyoutDisplayOptions="AsMultipleItems">
+        <ShellContent Title="Бюджет"
+                      ContentTemplate="{DataTemplate views:BudgetPage}"
+                      Route="budget" />
+    </FlyoutItem>
+
+    <!-- =========== КНОПКА ВЫХОДА (внизу меню) =========== -->
+    <MenuItem Text="Выход"
+              Clicked="OnLogoutClicked"
+              StyleClass="MenuItemFooter" />
+
 </Shell>

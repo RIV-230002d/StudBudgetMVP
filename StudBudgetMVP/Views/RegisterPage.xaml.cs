@@ -2,17 +2,19 @@
 using StudBudgetMVP.Services;
 using StudBudgetMVP.ViewModels;
 using System.IO;
-using Microsoft.Maui.Storage;
 
-namespace StudBudgetMVP.Views;
-
-public partial class RegisterPage : ContentPage
+namespace StudBudgetMVP.Views
 {
-    public RegisterPage()
+    public partial class RegisterPage : ContentPage
     {
-        InitializeComponent();
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
-        var vm = new RegisterViewModel(new SqliteDataService(dbPath));
-        BindingContext = vm;
+        public RegisterPage()
+        {
+            InitializeComponent();
+
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
+            var ds = new SqliteDataService(dbPath);
+
+            BindingContext = new RegisterViewModel(ds, Navigation);
+        }
     }
 }

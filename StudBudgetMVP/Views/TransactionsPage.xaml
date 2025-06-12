@@ -1,33 +1,55 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StudBudgetMVP.Views.TransactionsPage"
-             Title="Transactions">
+             Title="Транзакции">
+
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
 
-            <Label Text="Category:"/>
-            <Picker ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Name}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" />
+            <!-- категория -->
+            <Picker Title="Категория"
+                    ItemsSource="{Binding Categories}"
+                    ItemDisplayBinding="{Binding Name}"
+                    SelectedItem="{Binding SelectedCategory}" />
 
-            <Entry Placeholder="Amount" Text="{Binding Amount}" Keyboard="Numeric" />
+            <!-- сумма: руб + коп -->
+            <HorizontalStackLayout Spacing="5">
+                <Entry Placeholder="руб"
+                       WidthRequest="120"
+                       Keyboard="Numeric"
+                       Text="{Binding Rubles}" />
 
-            <Button Text="Add" Command="{Binding AddCommand}" />
+                <Label Text="." VerticalOptions="Center"/>
 
-            <CollectionView ItemsSource="{Binding Transactions}" SelectionMode="Single"
+                <Entry Placeholder="коп"
+                       WidthRequest="60"
+                       Keyboard="Numeric"
+                       MaxLength="2"
+                       Text="{Binding Kopeks}" />
+            </HorizontalStackLayout>
+
+            <!-- кнопки -->
+            <Button Text="Добавить" Command="{Binding AddCommand}" />
+            <Button Text="Удалить выбранную"
+                    Command="{Binding DeleteCommand}" />
+
+            <!-- список транзакций -->
+            <CollectionView ItemsSource="{Binding Transactions}"
+                            SelectionMode="Single"
                             SelectedItem="{Binding SelectedTransaction}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Frame Padding="10">
+                        <Frame Padding="10" Margin="0,5">
                             <VerticalStackLayout>
-                                <Label Text="{Binding Date, StringFormat='Date: {0:d}'}" />
-                                <Label Text="{Binding Amount, StringFormat='Amount: {0:C}'}" />
-                                <Label Text="{Binding CategoryId, StringFormat='CategoryId: {0}'}"/>
+                                <Label Text="{Binding Date, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
+                                       FontAttributes="Bold" />
+                                <Label Text="{Binding Amount, StringFormat='{}{0:C}'}" />
+                                <Label Text="{Binding CategoryName}" TextColor="Gray"/>
                             </VerticalStackLayout>
                         </Frame>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-
-            <Button Text="Delete" Command="{Binding DeleteCommand}" IsEnabled="{Binding SelectedTransaction}" />
 
         </VerticalStackLayout>
     </ScrollView>

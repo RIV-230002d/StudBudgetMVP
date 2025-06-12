@@ -1,46 +1,81 @@
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StudBudgetMVP.Views.BudgetPage"
-             Title="Budget">
-	<ScrollView>
-		<VerticalStackLayout Padding="20" Spacing="15">
+             Title="Бюджет">
 
-			<Label Text="Add Category:" FontAttributes="Bold"/>
-			<Entry Placeholder="Name" Text="{Binding NewCategoryName}" />
-			<StackLayout Orientation="Horizontal" Spacing="10">
-				<Label Text="Is Income:"/>
-				<Switch IsToggled="{Binding NewIsIncome}" />
-			</StackLayout>
-			<Entry Placeholder="Limit (for expense)" Text="{Binding NewLimit}" Keyboard="Numeric" IsEnabled="{Binding NewIsIncome, Converter={StaticResource InverseBoolConverter}}" />
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
 
-			<Button Text="Add" Command="{Binding AddCommand}" />
+            <!-- ==== строка доход / расход ==== -->
+            <Grid ColumnDefinitions="*,*" Margin="0,0,0,15">
+                <Label Text="{Binding TotalIncome, StringFormat='+{0:C}'}"
+                       TextColor="Green"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Start" />
 
-			<Label Text="Categories:" FontAttributes="Bold" />
-			<CollectionView ItemsSource="{Binding Categories}" SelectionMode="Single"
-                            SelectedItem="{Binding SelectedCategory}">
-				<CollectionView.ItemTemplate>
-					<DataTemplate>
-						<Frame BorderColor="Gray" Padding="5">
-							<VerticalStackLayout>
-								<Label Text="{Binding Name}" FontAttributes="Bold"/>
-								<Label Text="{Binding IsIncome, StringFormat='Type: {0}'}"/>
-								<Label Text="{Binding Limit, StringFormat='Limit: {0:C}'}"/>
-							</VerticalStackLayout>
-						</Frame>
-					</DataTemplate>
-				</CollectionView.ItemTemplate>
-			</CollectionView>
+                <Label Text="{Binding TotalExpense, StringFormat='-{0:C}'}"
+                       TextColor="Red"
+                       FontAttributes="Bold"
+                       HorizontalOptions="End"
+                       Grid.Column="1" />
+            </Grid>
 
-			<Button Text="Delete" Command="{Binding DeleteCommand}" IsEnabled="{Binding SelectedCategory}" />
+            <!-- ==== форма добавления категории ==== -->
+            <Label Text="Новая категория" FontAttributes="Bold" />
 
-			<Label Text="Overspent Categories:" FontAttributes="Bold"/>
-			<CollectionView ItemsSource="{Binding OverspentCategories}">
-				<CollectionView.ItemTemplate>
-					<DataTemplate>
-						<Label Text="{Binding}" TextColor="Red" />
-					</DataTemplate>
-				</CollectionView.ItemTemplate>
-			</CollectionView>
-		</VerticalStackLayout>
-	</ScrollView>
+            <Entry Placeholder="Название категории"
+                   Text="{Binding NewCategoryName}" />
+
+            <HorizontalStackLayout Spacing="10">
+                <RadioButton Content="Доход"
+                             GroupName="Type"
+                             IsChecked="{Binding NewIsIncome}" />
+                <RadioButton Content="Расход"
+                             GroupName="Type"
+                             IsChecked="{Binding NewIsIncome, Converter={StaticResource InverseBoolConverter}}" />
+            </HorizontalStackLayout>
+
+            <Entry Placeholder="Лимит (₽)"
+                   Keyboard="Numeric"
+                   Text="{Binding NewLimit}"
+                   IsVisible="{Binding IsExpense}" />
+
+            <Button Text="Сохранить" Command="{Binding AddCommand}" />
+            <Button Text="Удалить"   Command="{Binding DeleteCommand}" />
+
+            <!-- ==== список доходных ==== -->
+            <Label Text="Доходы:" FontAttributes="Bold" Margin="0,15,0,0"/>
+            <CollectionView ItemsSource="{Binding IncomeCategories}"
+                            HeightRequest="140">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="5" BorderColor="Gray" Margin="0,3">
+                            <Label Text="{Binding Name}" />
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- ==== список расходных ==== -->
+            <Label Text="Расходы:" FontAttributes="Bold" Margin="0,15,0,0"/>
+            <CollectionView ItemsSource="{Binding ExpenseCategories}"
+                            HeightRequest="200">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="5" BorderColor="Gray" Margin="0,3">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Name}" />
+                                <Label Text="{Binding Limit, StringFormat='Лимит: {0:C}'}"
+                                       FontSize="Small"
+                                       TextColor="DarkGray" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Перерасход скрыт по заданию -->
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
