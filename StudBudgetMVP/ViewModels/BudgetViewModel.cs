@@ -10,6 +10,18 @@ using System.Threading.Tasks;
 
 namespace StudBudgetMVP.ViewModels;
 
+/// <summary>Запись для отображения в списке.</summary>
+public class CategoryDisplay
+{
+    public int Id { get; init; }
+    public string Name { get; init; }
+    public bool IsIncome { get; init; }
+    public decimal? Limit { get; init; }      // null → доход или нет лимита
+    public decimal Total { get; init; }      // накоплено в текущем месяце
+
+    public bool IsOverspent => !IsIncome && Limit is decimal l && Total > l;
+}
+
 public partial class BudgetViewModel : ObservableObject
 {
     private readonly IDataService data;
@@ -18,35 +30,43 @@ public partial class BudgetViewModel : ObservableObject
     {
         data = service;
 
-        IncomeCategories = new ObservableCollection<Category>();
-        ExpenseCategories = new ObservableCollection<Category>();
+        IncomeCategories = new ObservableCollection<CategoryDisplay>();
+        ExpenseCategories = new ObservableCollection<CategoryDisplay>();
 
         AddCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         DeleteCommand = new AsyncRelayCommand(DeleteAsync, () => SelectedCategory != null);
+
+        IsIncomeTab = true;                     // показать список доходов
     }
 
-    // ---------- коллекции ----------
-    public ObservableCollection<Category> IncomeCategories { get; }
-    public ObservableCollection<Category> ExpenseCategories { get; }
+    // ---------- коллекции для UI ----------
+    public ObservableCollection<CategoryDisplay> IncomeCategories { get; }
+    public ObservableCollection<CategoryDisplay> ExpenseCategories { get; }
 
-    // ---------- поля ввода ----------
+    // ---------- поля формы ----------
     [ObservableProperty] private string newCategoryName;
-    [ObservableProperty] private string newLimit;      // для расхода
-    [ObservableProperty] private bool newIsIncome;   // true = доход
+    [ObservableProperty] private string newLimit;
+    [ObservableProperty] private bool newIsIncome;
     public bool IsExpense => !NewIsIncome;
 
     // ---------- выбранная ----------
     [ObservableProperty] private Category selectedCategory;
 
-    // ---------- итоги ----------
+    // ---------- итоговые суммы ----------
     [ObservableProperty] private decimal totalIncome;
     [ObservableProperty] private decimal totalExpense;
+
+    // ---------- переключатель списков ----------
+    [ObservableProperty] private bool isIncomeTab;
+    public bool IsExpenseTab => !IsIncomeTab;
+    partial void OnIsIncomeTabChanged(bool _, bool __) =>
+        OnPropertyChanged(nameof(IsExpenseTab));
 
     // ---------- команды ----------
     public IAsyncRelayCommand AddCommand { get; }
     public IAsyncRelayCommand DeleteCommand { get; }
 
-    // ========== события для CanExecute ==========
+    // ----- обновление CanExecute -----
     partial void OnNewCategoryNameChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
     partial void OnNewLimitChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
     partial void OnNewIsIncomeChanged(bool _, bool __)
@@ -56,72 +76,71 @@ public partial class BudgetViewModel : ObservableObject
     }
     partial void OnSelectedCategoryChanged(Category _, Category __) => DeleteCommand.NotifyCanExecuteChanged();
 
-    // ========== PUBLIC: загрузка ==========
+    // ================= публичное =================
     public async Task LoadAsync() => await RefreshAllAsync();
 
-    // ---------------------------------------------------------------------
-    // --------------------  ВНУТРЕННЯЯ  РАБОТА  ----------------------------
-    // ---------------------------------------------------------------------
-
+    // -----------------------------------------------------------------
     private async Task RefreshAllAsync()
     {
         var userId = Preferences.Get("userId", 0);
+        var now = DateTime.Now;
 
-        // --- категории
+        // --- исходные данные ---
         var cats = await data.GetCategoriesAsync(userId);
+        var txs = await data.GetTransactionsAsync(userId, now.Year, now.Month);
+
         IncomeCategories.Clear();
         ExpenseCategories.Clear();
 
         foreach (var c in cats)
         {
-            if (c.IsIncome) IncomeCategories.Add(c);
-            else ExpenseCategories.Add(c);
+            decimal sum = txs.Where(t => t.CategoryId == c.Id).Sum(t => t.Amount);
+
+            var item = new CategoryDisplay
+            {
+                Id = c.Id,
+                Name = c.Name,
+                IsIncome = c.IsIncome,
+                Limit = c.Limit,
+                Total = sum
+            };
+
+            if (c.IsIncome)
+                IncomeCategories.Add(item);
+            else
+                ExpenseCategories.Add(item);
         }
 
-        // --- суммы
-        var dt = DateTime.Now;
-        TotalIncome = await data.GetTotalIncomeAsync(userId, dt.Month, dt.Year);
-        TotalExpense = await data.GetTotalExpenseAsync(userId, dt.Month, dt.Year);
+        TotalIncome = IncomeCategories.Sum(i => i.Total);
+        TotalExpense = ExpenseCategories.Sum(e => e.Total);
     }
 
-    // ---------- сохранить / добавить ----------
+    // ================= создание / редактирование =================
     private bool CanSave()
     {
         if (string.IsNullOrWhiteSpace(NewCategoryName))
             return false;
 
-        if (IsExpense)
-            return decimal.TryParse(NewLimit, out var l) && l >= 0;
-
-        return true;
+        return IsExpense
+            ? decimal.TryParse(NewLimit, out var l) && l >= 0
+            : true;
     }
 
     private async Task SaveAsync()
     {
         var userId = Preferences.Get("userId", 0);
 
-        Category c;
-        if (SelectedCategory != null && SelectedCategory.Id > 0)
+        var cat = new Category
         {
-            c = SelectedCategory;
-            c.Name = NewCategoryName;
-            c.IsIncome = NewIsIncome;
-            c.Limit = IsExpense ? decimal.Parse(NewLimit) : (decimal?)null;
-        }
-        else
-        {
-            c = new Category
-            {
-                UserId = userId,
-                Name = NewCategoryName,
-                IsIncome = NewIsIncome,
-                Limit = IsExpense ? decimal.Parse(NewLimit) : (decimal?)null
-            };
-        }
+            UserId = userId,
+            Name = NewCategoryName,
+            IsIncome = NewIsIncome,
+            Limit = IsExpense ? decimal.Parse(NewLimit) : (decimal?)null
+        };
 
-        await data.AddCategoryAsync(c);
+        await data.AddCategoryAsync(cat);
 
-        // сброс формы
+        // очистка формы
         NewCategoryName = string.Empty;
         NewLimit = string.Empty;
         NewIsIncome = false;
@@ -129,7 +148,7 @@ public partial class BudgetViewModel : ObservableObject
         await RefreshAllAsync();
     }
 
-    // ---------- удалить ----------
+    // ================= удаление =================
     private async Task DeleteAsync()
     {
         if (SelectedCategory == null) return;
