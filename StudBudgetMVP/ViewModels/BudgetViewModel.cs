@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Controls;          // for DisplayAlert
 using Microsoft.Maui.Storage;
 using StudBudgetMVP.Models;
 using StudBudgetMVP.Services;
@@ -23,6 +24,7 @@ public class CategoryDisplay
 
 public partial class BudgetViewModel : ObservableObject
 {
+    // ──────────────────────────────────────────────────────────────────────────
     private readonly IDataService data;
 
     public BudgetViewModel(IDataService service)
@@ -39,6 +41,8 @@ public partial class BudgetViewModel : ObservableObject
         OverspentFirst = true;
         SortModes = new[] { "По имени", "Сначала новые", "Сначала старые" };
         SelectedSortMode = SortModes[0];
+
+        NewIsIncome = true;                    // форма по умолчанию «Доход»
     }
 
     // ---------- коллекции ----------
@@ -51,16 +55,7 @@ public partial class BudgetViewModel : ObservableObject
     [ObservableProperty] private bool newIsIncome;
     public bool IsExpense => !NewIsIncome;
 
-    // —–– уведомляем команду при изменениях поля/лимита/типа
-    partial void OnNewCategoryNameChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
-    partial void OnNewLimitChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
-    partial void OnNewIsIncomeChanged(bool _, bool __)
-    {
-        OnPropertyChanged(nameof(IsExpense));
-        AddCommand.NotifyCanExecuteChanged();
-    }
-
-    // ---------- итоги ----------
+    // ---------- итоговые суммы ----------
     [ObservableProperty] private decimal totalIncome;
     [ObservableProperty] private decimal totalExpense;
     [ObservableProperty] private bool hasOverspend;
@@ -70,7 +65,7 @@ public partial class BudgetViewModel : ObservableObject
     public bool IsExpenseTab => !IsIncomeTab;
     partial void OnIsIncomeTabChanged(bool _, bool __) => OnPropertyChanged(nameof(IsExpenseTab));
 
-    // ---------- управление сортировкой ----------
+    // ---------- сортировка ----------
     public string[] SortModes { get; }
     [ObservableProperty] private string selectedSortMode;
     [ObservableProperty] private bool overspentFirst;
@@ -81,6 +76,17 @@ public partial class BudgetViewModel : ObservableObject
     // ---------- команды ----------
     public IAsyncRelayCommand AddCommand { get; }
     public IAsyncRelayCommand<CategoryDisplay> DeleteCategoryCommand { get; }
+
+    // =====================================================================
+    //  DO NOT DELETE: validity callbacks for AddCommand / IsExpense binding
+    // =====================================================================
+    partial void OnNewCategoryNameChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
+    partial void OnNewLimitChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
+    partial void OnNewIsIncomeChanged(bool _, bool __)
+    {
+        OnPropertyChanged(nameof(IsExpense));
+        AddCommand.NotifyCanExecuteChanged();
+    }
 
     // ================= LOAD =================
     public async Task LoadAsync() => await RefreshAllAsync();
@@ -131,34 +137,24 @@ public partial class BudgetViewModel : ObservableObject
             {
                 "Сначала новые" => src.OrderByDescending(c => c.Id),
                 "Сначала старые" => src.OrderBy(c => c.Id),
-                _ => src.OrderBy(c => c.Name,
-                                                StringComparer.CurrentCultureIgnoreCase)
+                _ => src.OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)
             };
 
-        // ---------- ДОХОДЫ ----------
+        // доходы
         var incOrdered = SortCore(IncomeCategories).ToList();
         IncomeCategories.Clear();
         foreach (var i in incOrdered) IncomeCategories.Add(i);
 
-        // ---------- РАСХОДЫ ----------
-        // копию делаем СРАЗУ, чтобы дальнейшее Clear() не влиял на перечисление
-        var srcExpenses = ExpenseCategories.ToList();
-
-        IEnumerable<CategoryDisplay> ordered;
-
-        if (OverspentFirst)
-        {
-            var overs = SortCore(srcExpenses.Where(c => c.IsOverspent));
-            var rest = SortCore(srcExpenses.Where(c => !c.IsOverspent));
-            ordered = overs.Concat(rest);
-        }
-        else
-        {
-            ordered = SortCore(srcExpenses);
-        }
+        // расходы
+        var baseExpenses = ExpenseCategories.ToList();
+        IEnumerable<CategoryDisplay> orderedExp =
+            OverspentFirst
+                ? SortCore(baseExpenses.Where(e => e.IsOverspent))
+                      .Concat(SortCore(baseExpenses.Where(e => !e.IsOverspent)))
+                : SortCore(baseExpenses);
 
         ExpenseCategories.Clear();
-        foreach (var e in ordered) ExpenseCategories.Add(e);
+        foreach (var e in orderedExp) ExpenseCategories.Add(e);
     }
 
     // ---------- add ----------
@@ -167,32 +163,40 @@ public partial class BudgetViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(NewCategoryName))
             return false;
 
-        if (!IsExpense)            // это доход
-            return true;
+        if (IsExpense)
+        {
+            var txt = (NewLimit ?? string.Empty).Replace('.', ',');
+            return decimal.TryParse(txt, out var l) && l >= 0;
+        }
 
-        var txt = NewLimit?.Trim();
-        return !string.IsNullOrWhiteSpace(txt) &&
-               decimal.TryParse(txt, out var l) &&
-               l >= 0;
+        return true; // доход
     }
 
     private async Task SaveAsync()
     {
         var userId = Preferences.Get("userId", 0);
 
+        decimal? limitValue = null;
+        if (IsExpense)
+        {
+            var txt = (NewLimit ?? string.Empty).Replace('.', ',');
+            limitValue = decimal.Parse(txt);
+        }
+
         var cat = new Category
         {
             UserId = userId,
-            Name = NewCategoryName.Trim(),
+            Name = NewCategoryName,
             IsIncome = NewIsIncome,
-            Limit = IsExpense ? decimal.Parse(NewLimit.Trim()) : (decimal?)null
+            Limit = limitValue
         };
 
         await data.AddCategoryAsync(cat);
 
+        // очистка формы
         NewCategoryName = string.Empty;
         NewLimit = string.Empty;
-        NewIsIncome = false;
+        NewIsIncome = true;   // снова «Доход»
 
         await RefreshAllAsync();
     }
@@ -201,6 +205,13 @@ public partial class BudgetViewModel : ObservableObject
     private async Task DeleteCategoryAsync(CategoryDisplay cat)
     {
         if (cat == null) return;
+
+        bool confirm = await Application.Current.MainPage.DisplayAlert(
+            "Удалить категорию?",
+            "Вы действительно хотите удалить эту категорию и все связанные с ней транзакции?",
+            "Да", "Нет");
+
+        if (!confirm) return;
 
         await data.DeleteCategoryAsync(cat.Id);
         await RefreshAllAsync();

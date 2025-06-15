@@ -27,15 +27,18 @@
             </Grid>
 
             <!-- ===== форма добавления категории ===== -->
-            <Frame BorderColor="#D0D0D0" CornerRadius="12" Padding="15">
+            <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15">
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Новая категория" FontAttributes="Bold" TextColor="Gray"/>
+
+                    <Label Text="Новая категория"
+                           FontAttributes="Bold"
+                           TextColor="Gray"/>
 
                     <Entry Placeholder="Название категории"
                            Text="{Binding NewCategoryName}" />
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="15">
-                        <HorizontalStackLayout Spacing="10">
+                        <HorizontalStackLayout Spacing="25">
                             <RadioButton Content="Доход"
                                          GroupName="AddType"
                                          IsChecked="{Binding NewIsIncome}" />
@@ -51,33 +54,34 @@
                                IsVisible="{Binding IsExpense}" />
                     </Grid>
 
-                    <Button Text="Сохранить" Command="{Binding AddCommand}" />
+                    <Button Text="Сохранить"
+                            Command="{Binding AddCommand}" />
                 </VerticalStackLayout>
             </Frame>
 
-            <!-- ===== блок табов + сортировка + список ===== -->
+            <!-- ===== табы + сортировка + список ===== -->
             <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15" Margin="0,15,0,0">
 
                 <VerticalStackLayout Spacing="10">
 
-                    <!-- табы (слева) + сортировка (справа) -->
-                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <!-- табы + системный выпадающий список сортировки -->
+                    <!-- ColumnSpacing увеличен, Spacing у radio-стека уменьшен -->
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="25"
+                          VerticalOptions="Center">
 
-                        <!-- переключатель доход / расход -->
-                        <HorizontalStackLayout Spacing="25">
+                        <HorizontalStackLayout Spacing="10">
                             <RadioButton Content="Доходы"
                                          GroupName="Tab"
                                          IsChecked="{Binding IsIncomeTab}">
                                 <RadioButton.Style>
                                     <Style TargetType="RadioButton">
-                                        <Setter Property="TextColor"      Value="Gray" />
-                                        <Setter Property="FontAttributes" Value="None" />
+                                        <Setter Property="TextColor"      Value="Gray"/>
+                                        <Setter Property="FontAttributes" Value="None"/>
                                         <Style.Triggers>
-                                            <Trigger TargetType="RadioButton"
-                                                     Property="IsChecked"
-                                                     Value="True">
+                                            <Trigger Property="IsChecked" Value="True" TargetType="RadioButton">
                                                 <Setter Property="TextColor"      Value="Black"/>
-                                                <Setter Property="FontAttributes" Value="Bold" />
+                                                <Setter Property="FontAttributes" Value="Bold"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -89,14 +93,12 @@
                                          IsChecked="{Binding IsIncomeTab, Converter={StaticResource InverseBoolConverter}}">
                                 <RadioButton.Style>
                                     <Style TargetType="RadioButton">
-                                        <Setter Property="TextColor"      Value="Gray" />
-                                        <Setter Property="FontAttributes" Value="None" />
+                                        <Setter Property="TextColor"      Value="Gray"/>
+                                        <Setter Property="FontAttributes" Value="None"/>
                                         <Style.Triggers>
-                                            <Trigger TargetType="RadioButton"
-                                                     Property="IsChecked"
-                                                     Value="True">
+                                            <Trigger Property="IsChecked" Value="True" TargetType="RadioButton">
                                                 <Setter Property="TextColor"      Value="Black"/>
-                                                <Setter Property="FontAttributes" Value="Bold" />
+                                                <Setter Property="FontAttributes" Value="Bold"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -104,18 +106,17 @@
                             </RadioButton>
                         </HorizontalStackLayout>
 
-                        <!-- выбор режима сортировки -->
                         <Picker Grid.Column="1"
-                                WidthRequest="140"
+                                WidthRequest="150"
                                 Title="Сортировка"
                                 ItemsSource="{Binding SortModes}"
                                 SelectedItem="{Binding SelectedSortMode}" />
                     </Grid>
 
-                    <!-- чекбокс «перерасход вперёд» -->
-                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <!-- чекбокс -->
+                    <HorizontalStackLayout Spacing="6">
                         <CheckBox IsChecked="{Binding OverspentFirst}" />
-                        <Label Text="Показывать категории с перерасходом первыми"
+                        <Label Text="Выделять перерасход"
                                VerticalOptions="Center"/>
                     </HorizontalStackLayout>
 
@@ -166,9 +167,9 @@
                                             <Style TargetType="Frame">
                                                 <Setter Property="BorderColor" Value="#8A8A8A"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger TargetType="Frame"
-                                                                 Binding="{Binding IsOverspent}"
-                                                                 Value="True">
+                                                    <DataTrigger Binding="{Binding IsOverspent}"
+                                                                 Value="True"
+                                                                 TargetType="Frame">
                                                         <Setter Property="BorderColor" Value="Red"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -187,9 +188,9 @@
                                                         <Style TargetType="Label">
                                                             <Setter Property="TextColor" Value="Black"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger TargetType="Label"
-                                                                             Binding="{Binding IsOverspent}"
-                                                                             Value="True">
+                                                                <DataTrigger Binding="{Binding IsOverspent}"
+                                                                             Value="True"
+                                                                             TargetType="Label">
                                                                     <Setter Property="TextColor" Value="Red"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
