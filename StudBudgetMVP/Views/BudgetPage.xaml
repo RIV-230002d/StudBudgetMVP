@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StudBudgetMVP.Views.BudgetPage"
              Title="Бюджет">
@@ -7,31 +6,34 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
 
-            <!-- итоговые суммы -->
-            <Grid ColumnDefinitions="*,*" Margin="0,0,0,15">
-                <Label Text="{Binding TotalIncome,  StringFormat='+{0:C}'}"
-                       TextColor="Green" FontAttributes="Bold" />
-                <Label Text="{Binding TotalExpense, StringFormat='-{0:C}'}"
-                       TextColor="Red"   FontAttributes="Bold"
-                       HorizontalOptions="End"
-                       Grid.Column="1" />
+            <!-- итоговые суммы + предупреждение -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,0,0,15">
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="{Binding TotalIncome,  StringFormat='+{0:C}'}"
+                       TextColor="Green" FontAttributes="Bold"/>
+
+                <Label Grid.Row="0" Grid.Column="1"
+                       Text="{Binding TotalExpense, StringFormat='-{0:C}'}"
+                       TextColor="Red" FontAttributes="Bold"
+                       HorizontalOptions="End"/>
+
+                <Label Grid.Row="1" Grid.ColumnSpan="2"
+                       Text="Перерасход!"
+                       FontAttributes="Bold"
+                       TextColor="Red"
+                       HorizontalOptions="Center"
+                       IsVisible="{Binding HasOverspend}"/>
             </Grid>
 
             <!-- ===== форма добавления категории ===== -->
-            <Frame BorderColor="#D0D0D0"
-                   CornerRadius="12"
-                   Padding="15">
+            <Frame BorderColor="#D0D0D0" CornerRadius="12" Padding="15">
                 <VerticalStackLayout Spacing="10">
-
-                    <Label Text="Новая категория"
-                           FontAttributes="Bold"
-                           TextColor="Gray"/>
+                    <Label Text="Новая категория" FontAttributes="Bold" TextColor="Gray"/>
 
                     <Entry Placeholder="Название категории"
                            Text="{Binding NewCategoryName}" />
 
-                    <!-- тип + лимит в одну строку -->
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="15" VerticalOptions="Center">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="15">
                         <HorizontalStackLayout Spacing="10">
                             <RadioButton Content="Доход"
                                          GroupName="AddType"
@@ -41,7 +43,6 @@
                                          IsChecked="{Binding NewIsIncome, Converter={StaticResource InverseBoolConverter}}" />
                         </HorizontalStackLayout>
 
-                        <!-- лимит — показываем только для расхода -->
                         <Entry Grid.Column="1"
                                Placeholder="Лимит ₽"
                                Keyboard="Numeric"
@@ -49,75 +50,79 @@
                                IsVisible="{Binding IsExpense}" />
                     </Grid>
 
-                    <Button Text="Сохранить"
-                            Command="{Binding AddCommand}" />
+                    <Button Text="Сохранить" Command="{Binding AddCommand}" />
                 </VerticalStackLayout>
             </Frame>
 
-            <!-- ===== блок списка (табы + список) в собственной рамке ===== -->
-            <Frame BorderColor="#8A8A8A"
-                   CornerRadius="12"
-                   Padding="15"
-                   Margin="0,15,0,0">
+            <!-- ===== блок: табы/сортировка + список ===== -->
+            <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15" Margin="0,15,0,0">
 
                 <VerticalStackLayout Spacing="10">
 
-                    <!-- таб-переключатель -->
-                    <HorizontalStackLayout HorizontalOptions="Center"
-                                           Spacing="25">
-                        <RadioButton Content="Доходы"
-                                     GroupName="Tab"
-                                     IsChecked="{Binding IsIncomeTab}">
-                            <RadioButton.Style>
-                                <Style TargetType="RadioButton">
-                                    <Setter Property="TextColor"      Value="Gray"/>
-                                    <Setter Property="FontAttributes" Value="None"/>
-                                    <Style.Triggers>
-                                        <Trigger TargetType="RadioButton"
-                                                 Property="IsChecked"
-                                                 Value="True">
-                                            <Setter Property="TextColor"      Value="Black"/>
-                                            <Setter Property="FontAttributes" Value="Bold"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </RadioButton.Style>
-                        </RadioButton>
+                    <!-- строка переключателей -->
+                    <Grid ColumnDefinitions="Auto,*" VerticalOptions="Center">
+                        <!-- табы Доход / Расход -->
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                            <RadioButton Content="Доходы"
+                                         GroupName="Tab"
+                                         IsChecked="{Binding IsIncomeTab}">
+                                <RadioButton.Style>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="TextColor"      Value="Gray"/>
+                                        <Setter Property="FontAttributes" Value="None"/>
+                                        <Style.Triggers>
+                                            <!-- FIX -->
+                                            <Trigger TargetType="RadioButton"
+                                                     Property="IsChecked"
+                                                     Value="True">
+                                                <Setter Property="TextColor"      Value="Black"/>
+                                                <Setter Property="FontAttributes" Value="Bold"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </RadioButton.Style>
+                            </RadioButton>
 
-                        <RadioButton Content="Расходы"
-                                     GroupName="Tab"
-                                     IsChecked="{Binding IsIncomeTab, Converter={StaticResource InverseBoolConverter}}">
-                            <RadioButton.Style>
-                                <Style TargetType="RadioButton">
-                                    <Setter Property="TextColor"      Value="Gray"/>
-                                    <Setter Property="FontAttributes" Value="None"/>
-                                    <Style.Triggers>
-                                        <Trigger TargetType="RadioButton"
-                                                 Property="IsChecked"
-                                                 Value="True">
-                                            <Setter Property="TextColor"      Value="Black"/>
-                                            <Setter Property="FontAttributes" Value="Bold"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </RadioButton.Style>
-                        </RadioButton>
-                    </HorizontalStackLayout>
+                            <RadioButton Content="Расходы"
+                                         GroupName="Tab"
+                                         IsChecked="{Binding IsIncomeTab, Converter={StaticResource InverseBoolConverter}}">
+                                <RadioButton.Style>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="TextColor"      Value="Gray"/>
+                                        <Setter Property="FontAttributes" Value="None"/>
+                                        <Style.Triggers>
+                                            <!-- FIX -->
+                                            <Trigger TargetType="RadioButton"
+                                                     Property="IsChecked"
+                                                     Value="True">
+                                                <Setter Property="TextColor"      Value="Black"/>
+                                                <Setter Property="FontAttributes" Value="Bold"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </RadioButton.Style>
+                            </RadioButton>
+                        </HorizontalStackLayout>
+
+                        <!-- выпадающий список сортировки -->
+                        <Picker Grid.Column="1"
+                                Title="Сортировка"
+                                ItemsSource="{Binding SortOptions}"
+                                SelectedItem="{Binding SelectedSortMode}"
+                                HorizontalOptions="End"
+                                WidthRequest="160"/>
+                    </Grid>
 
                     <!-- ===== список доходов ===== -->
-                    <Border Stroke="#606060"
-                            StrokeThickness="1"
-                            Padding="0"
+                    <Border Stroke="#8A8A8A" StrokeThickness="1"
+                            HeightRequest="300"
                             IsVisible="{Binding IsIncomeTab}">
-
                         <CollectionView ItemsSource="{Binding IncomeCategories}"
                                         HeightRequest="300"
                                         VerticalScrollBarVisibility="Always">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Frame Padding="5"
-                                           BorderColor="#8A8A8A"
-                                           Margin="0,3">
+                                    <Frame Padding="5" BorderColor="#8A8A8A" Margin="0,3">
                                         <VerticalStackLayout>
                                             <Label Text="{Binding Name}" />
                                             <Label Text="{Binding Total, StringFormat='Доход: {0:C}'}"
@@ -131,18 +136,15 @@
                     </Border>
 
                     <!-- ===== список расходов ===== -->
-                    <Border Stroke="#606060"
-                            StrokeThickness="1"
-                            Padding="0"
+                    <Border Stroke="#8A8A8A" StrokeThickness="1"
+                            HeightRequest="300"
                             IsVisible="{Binding IsExpenseTab}">
-
                         <CollectionView ItemsSource="{Binding ExpenseCategories}"
                                         HeightRequest="300"
                                         VerticalScrollBarVisibility="Always">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Frame Padding="5" Margin="0,3">
-                                        <!-- обводка красным, если перерасход -->
                                         <Frame.Style>
                                             <Style TargetType="Frame">
                                                 <Setter Property="BorderColor" Value="#8A8A8A"/>

@@ -7,6 +7,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace StudBudgetMVP.ViewModels;
 
@@ -33,10 +34,13 @@ public partial class BudgetViewModel : ObservableObject
         IncomeCategories = new ObservableCollection<CategoryDisplay>();
         ExpenseCategories = new ObservableCollection<CategoryDisplay>();
 
+        SortOptions = new[] { "Алфавиту", "Новые → старые", "Старые → новые" };
+        SelectedSortMode = SortOptions[0];          // режим по умолчанию
+
         AddCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         DeleteCommand = new AsyncRelayCommand(DeleteAsync, () => SelectedCategory != null);
 
-        IsIncomeTab = true;                     // показать список доходов
+        IsIncomeTab = true; // стартуем со списка доходов
     }
 
     // ---------- коллекции для UI ----------
@@ -55,12 +59,18 @@ public partial class BudgetViewModel : ObservableObject
     // ---------- итоговые суммы ----------
     [ObservableProperty] private decimal totalIncome;
     [ObservableProperty] private decimal totalExpense;
+    [ObservableProperty] private bool hasOverspend;
 
-    // ---------- переключатель списков ----------
+    // ---------- переключатели ----------
     [ObservableProperty] private bool isIncomeTab;
     public bool IsExpenseTab => !IsIncomeTab;
     partial void OnIsIncomeTabChanged(bool _, bool __) =>
         OnPropertyChanged(nameof(IsExpenseTab));
+
+    // ---------- сортировка ----------
+    public IReadOnlyList<string> SortOptions { get; }
+    [ObservableProperty] private string selectedSortMode;
+    partial void OnSelectedSortModeChanged(string _, string __) => ApplySorting();
 
     // ---------- команды ----------
     public IAsyncRelayCommand AddCommand { get; }
@@ -85,12 +95,14 @@ public partial class BudgetViewModel : ObservableObject
         var userId = Preferences.Get("userId", 0);
         var now = DateTime.Now;
 
-        // --- исходные данные ---
         var cats = await data.GetCategoriesAsync(userId);
         var txs = await data.GetTransactionsAsync(userId, now.Year, now.Month);
 
         IncomeCategories.Clear();
         ExpenseCategories.Clear();
+
+        var tmpIncome = new List<CategoryDisplay>();
+        var tmpExpense = new List<CategoryDisplay>();
 
         foreach (var c in cats)
         {
@@ -105,14 +117,52 @@ public partial class BudgetViewModel : ObservableObject
                 Total = sum
             };
 
-            if (c.IsIncome)
-                IncomeCategories.Add(item);
-            else
-                ExpenseCategories.Add(item);
+            if (c.IsIncome) tmpIncome.Add(item);
+            else tmpExpense.Add(item);
         }
 
+        // первичная сортировка + распределение в коллекции
+        AddRangeSorted(IncomeCategories, tmpIncome);
+        AddRangeSorted(ExpenseCategories, tmpExpense, overspentFirst: true);
+
+        // итоги + общий флаг перерасхода
         TotalIncome = IncomeCategories.Sum(i => i.Total);
         TotalExpense = ExpenseCategories.Sum(e => e.Total);
+        HasOverspend = TotalExpense > TotalIncome;
+    }
+
+    // применяем выбранный режим сортировки к существующим коллекциям
+    private void ApplySorting()
+    {
+        // сохраняем текущее содержимое
+        var income = IncomeCategories.ToList();
+        var expense = ExpenseCategories.ToList();
+
+        IncomeCategories.Clear();
+        ExpenseCategories.Clear();
+
+        AddRangeSorted(IncomeCategories, income);
+        AddRangeSorted(ExpenseCategories, expense, overspentFirst: true);
+    }
+
+    private void AddRangeSorted(ObservableCollection<CategoryDisplay> target,
+                                IEnumerable<CategoryDisplay> source,
+                                bool overspentFirst = false)
+    {
+        IOrderedEnumerable<CategoryDisplay> ordered = SelectedSortMode switch
+        {
+            "Новые → старые" => source.OrderByDescending(c => c.Id),
+            "Старые → новые" => source.OrderBy(c => c.Id),
+            _ => source.OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)
+        };
+
+        if (overspentFirst)
+            ordered = ordered
+                      .OrderByDescending(c => c.IsOverspent)
+                      .ThenBy(e => 0); // сохраняем уже выбранный secondary order
+
+        foreach (var item in ordered)
+            target.Add(item);
     }
 
     // ================= создание / редактирование =================
