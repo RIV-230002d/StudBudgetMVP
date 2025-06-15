@@ -1,6 +1,7 @@
 ﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="StudBudgetMVP.Views.BudgetPage"
+             x:Name="root"
              Title="Бюджет">
 
     <ScrollView>
@@ -54,29 +55,29 @@
                 </VerticalStackLayout>
             </Frame>
 
-            <!-- ===== блок: табы/сортировка + список ===== -->
+            <!-- ===== блок табов + сортировка + список ===== -->
             <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15" Margin="0,15,0,0">
 
                 <VerticalStackLayout Spacing="10">
 
-                    <!-- строка переключателей -->
-                    <Grid ColumnDefinitions="Auto,*" VerticalOptions="Center">
-                        <!-- табы Доход / Расход -->
-                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                    <!-- табы (слева) + сортировка (справа) -->
+                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+
+                        <!-- переключатель доход / расход -->
+                        <HorizontalStackLayout Spacing="25">
                             <RadioButton Content="Доходы"
                                          GroupName="Tab"
                                          IsChecked="{Binding IsIncomeTab}">
                                 <RadioButton.Style>
                                     <Style TargetType="RadioButton">
-                                        <Setter Property="TextColor"      Value="Gray"/>
-                                        <Setter Property="FontAttributes" Value="None"/>
+                                        <Setter Property="TextColor"      Value="Gray" />
+                                        <Setter Property="FontAttributes" Value="None" />
                                         <Style.Triggers>
-                                            <!-- FIX -->
                                             <Trigger TargetType="RadioButton"
                                                      Property="IsChecked"
                                                      Value="True">
                                                 <Setter Property="TextColor"      Value="Black"/>
-                                                <Setter Property="FontAttributes" Value="Bold"/>
+                                                <Setter Property="FontAttributes" Value="Bold" />
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -88,15 +89,14 @@
                                          IsChecked="{Binding IsIncomeTab, Converter={StaticResource InverseBoolConverter}}">
                                 <RadioButton.Style>
                                     <Style TargetType="RadioButton">
-                                        <Setter Property="TextColor"      Value="Gray"/>
-                                        <Setter Property="FontAttributes" Value="None"/>
+                                        <Setter Property="TextColor"      Value="Gray" />
+                                        <Setter Property="FontAttributes" Value="None" />
                                         <Style.Triggers>
-                                            <!-- FIX -->
                                             <Trigger TargetType="RadioButton"
                                                      Property="IsChecked"
                                                      Value="True">
                                                 <Setter Property="TextColor"      Value="Black"/>
-                                                <Setter Property="FontAttributes" Value="Bold"/>
+                                                <Setter Property="FontAttributes" Value="Bold" />
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -104,14 +104,20 @@
                             </RadioButton>
                         </HorizontalStackLayout>
 
-                        <!-- выпадающий список сортировки -->
+                        <!-- выбор режима сортировки -->
                         <Picker Grid.Column="1"
+                                WidthRequest="140"
                                 Title="Сортировка"
-                                ItemsSource="{Binding SortOptions}"
-                                SelectedItem="{Binding SelectedSortMode}"
-                                HorizontalOptions="End"
-                                WidthRequest="160"/>
+                                ItemsSource="{Binding SortModes}"
+                                SelectedItem="{Binding SelectedSortMode}" />
                     </Grid>
+
+                    <!-- чекбокс «перерасход вперёд» -->
+                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                        <CheckBox IsChecked="{Binding OverspentFirst}" />
+                        <Label Text="Показывать категории с перерасходом первыми"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
 
                     <!-- ===== список доходов ===== -->
                     <Border Stroke="#8A8A8A" StrokeThickness="1"
@@ -123,12 +129,23 @@
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Frame Padding="5" BorderColor="#8A8A8A" Margin="0,3">
-                                        <VerticalStackLayout>
-                                            <Label Text="{Binding Name}" />
-                                            <Label Text="{Binding Total, StringFormat='Доход: {0:C}'}"
-                                                   FontSize="Small"
-                                                   TextColor="Green"/>
-                                        </VerticalStackLayout>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding Name}" />
+                                                <Label Text="{Binding Total, StringFormat='Доход: {0:C}'}"
+                                                       FontSize="Small"
+                                                       TextColor="Green"/>
+                                            </VerticalStackLayout>
+
+                                            <Button Grid.Column="1"
+                                                    Text="✕"
+                                                    FontAttributes="Bold"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="DarkGray"
+                                                    Padding="0"
+                                                    Command="{Binding BindingContext.DeleteCategoryCommand, Source={x:Reference root}}"
+                                                    CommandParameter="{Binding .}" />
+                                        </Grid>
                                     </Frame>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
@@ -158,27 +175,38 @@
                                             </Style>
                                         </Frame.Style>
 
-                                        <VerticalStackLayout>
-                                            <Label Text="{Binding Name}" />
-                                            <Label Text="{Binding Limit, StringFormat='Лимит: {0:C}'}"
-                                                   FontSize="Small"
-                                                   TextColor="DarkGray" />
-                                            <Label Text="{Binding Total, StringFormat='Фактический расход: {0:C}'}"
-                                                   FontSize="Small">
-                                                <Label.Style>
-                                                    <Style TargetType="Label">
-                                                        <Setter Property="TextColor" Value="Black"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger TargetType="Label"
-                                                                         Binding="{Binding IsOverspent}"
-                                                                         Value="True">
-                                                                <Setter Property="TextColor" Value="Red"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Label.Style>
-                                            </Label>
-                                        </VerticalStackLayout>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <VerticalStackLayout>
+                                                <Label Text="{Binding Name}" />
+                                                <Label Text="{Binding Limit, StringFormat='Лимит: {0:C}'}"
+                                                       FontSize="Small"
+                                                       TextColor="DarkGray" />
+                                                <Label Text="{Binding Total, StringFormat='Фактический расход: {0:C}'}"
+                                                       FontSize="Small">
+                                                    <Label.Style>
+                                                        <Style TargetType="Label">
+                                                            <Setter Property="TextColor" Value="Black"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger TargetType="Label"
+                                                                             Binding="{Binding IsOverspent}"
+                                                                             Value="True">
+                                                                    <Setter Property="TextColor" Value="Red"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Label.Style>
+                                                </Label>
+                                            </VerticalStackLayout>
+
+                                            <Button Grid.Column="1"
+                                                    Text="✕"
+                                                    FontAttributes="Bold"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="DarkGray"
+                                                    Padding="0"
+                                                    Command="{Binding BindingContext.DeleteCategoryCommand, Source={x:Reference root}}"
+                                                    CommandParameter="{Binding .}" />
+                                        </Grid>
                                     </Frame>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
