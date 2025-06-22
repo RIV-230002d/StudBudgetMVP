@@ -1,0 +1,30 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="StudBudgetMVP.Views.ProfilePage"
+             Title="Профиль">
+
+    <VerticalStackLayout Padding="30" Spacing="28" VerticalOptions="Center">
+        <!-- Profile picture (не пропадёт) -->
+        <Image Source="profile_placeholder.png"
+               WidthRequest="120"
+               HeightRequest="120"
+               Aspect="AspectFill"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Margin="0,0,0,10" />
+
+        <!-- Username -->
+        <Label Text="{Binding Username, FallbackValue='Имя пользователя'}"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               TextColor="Gray"/>
+
+        <!-- Settings button -->
+        <Button Text="Настройки"
+                HorizontalOptions="Center"
+                WidthRequest="160"
+                Margin="0,30,0,0"
+                Command="{Binding OpenSettingsCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

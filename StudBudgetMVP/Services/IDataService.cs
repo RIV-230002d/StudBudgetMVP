@@ -11,6 +11,9 @@ namespace StudBudgetMVP.Services
         Task<bool> RegisterAsync(string username, string password);
         Task<User?> LoginAsync(string username, string password);
 
+        // --- новое: получение пользователя по id ---
+        Task<User?> GetUserByIdAsync(int userId);
+
         // --- категории ---
         Task<List<Category>> GetCategoriesAsync(int userId);
         Task AddCategoryAsync(Category cat);

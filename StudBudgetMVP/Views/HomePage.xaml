@@ -1,0 +1,101 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="StudBudgetMVP.Views.HomePage"
+             Title="Главная">
+
+    <VerticalStackLayout Padding="20" Spacing="20">
+
+        <!-- ===== Верхняя панель: месяц + инфо ===== -->
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" Padding="0,0,0,10">
+
+            <!-- Месяц и год — по центру -->
+            <Label Grid.Row="0" Grid.ColumnSpan="2"
+                   Text="{Binding CurrentMonthYear}"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10" />
+
+            <!-- Левая часть: Доход, Расход, Перерасход -->
+            <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="0" VerticalOptions="Start">
+
+                <Label Text="{Binding TotalIncome, StringFormat='+{0:C}'}"
+                       TextColor="Green"
+                       FontAttributes="Bold"
+                       FontSize="18"
+                       Margin="0,0,0,2" />
+
+                <Label Text="{Binding TotalExpense, StringFormat='-{0:C}'}"
+                       TextColor="Red"
+                       FontAttributes="Bold"
+                       FontSize="18"
+                       Margin="0,0,0,2" />
+
+                <Label Text="Перерасход!"
+                       FontAttributes="Bold"
+                       TextColor="Red"
+                       FontSize="16"
+                       IsVisible="{Binding HasOverspend}"
+                       Margin="0,0,0,0" />
+
+                <!-- Зарезервированная строка -->
+                <Label Text=""
+                       FontSize="16"
+                       IsVisible="False"
+                       Margin="0,0,0,0" />
+            </VerticalStackLayout>
+
+            <!-- Правая часть: Profile Picture -->
+            <Image Grid.Row="1" Grid.Column="1"
+                   Source="profile_placeholder.png"
+                   WidthRequest="64"
+                   HeightRequest="64"
+                   Aspect="AspectFill"
+                   Margin="18,0,0,0"
+                   VerticalOptions="Start"
+                   HorizontalOptions="End" />
+        </Grid>
+
+        <!-- ===== Список бюджетов ===== -->
+        <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15" Margin="0,0,0,0">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Бюджеты за месяц" FontAttributes="Bold" FontSize="17" TextColor="Gray" />
+
+                <CollectionView ItemsSource="{Binding ExpenseCategories}" HeightRequest="300" VerticalScrollBarVisibility="Always">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Padding="5" Margin="0,3">
+                                <Frame.Style>
+                                    <Style TargetType="Frame">
+                                        <Setter Property="BorderColor" Value="#8A8A8A"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOverspent}" Value="True" TargetType="Frame">
+                                                <Setter Property="BorderColor" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Frame.Style>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout>
+                                        <Label Text="{Binding Name}" FontAttributes="Bold"/>
+                                        <Label FontSize="Small">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="Потрачено " />
+                                                    <Span Text="{Binding Total, StringFormat='{0:C}'}" FontAttributes="Bold"/>
+                                                    <Span Text=" из " />
+                                                    <Span Text="{Binding Limit, StringFormat='{0:C}'}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </Frame>
+
+    </VerticalStackLayout>
+</ContentPage>

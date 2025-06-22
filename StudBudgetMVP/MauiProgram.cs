@@ -23,6 +23,8 @@ public static class MauiProgram
         builder.Services.AddTransient<RegisterViewModel>();
         builder.Services.AddTransient<TransactionsViewModel>();
         builder.Services.AddTransient<BudgetViewModel>();
+        builder.Services.AddTransient<HomeViewModel>();      // новый
+        builder.Services.AddTransient<ProfileViewModel>();   // новый
 
         return builder.Build();
     }

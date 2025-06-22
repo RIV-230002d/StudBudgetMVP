@@ -11,16 +11,17 @@ namespace StudBudgetMVP
         {
             InitializeComponent();
 
-            // регистрируем маршрут страницы регистрации
+            // Регистрируем маршруты для Shell (на случай переходов)
             Routing.RegisterRoute("register", typeof(RegisterPage));
+            Routing.RegisterRoute("home", typeof(HomePage));
+            Routing.RegisterRoute("profile", typeof(ProfilePage));
+            // Остальные уже зарегистрированы через ContentTemplate
         }
 
         // обработчик пункта "Выход"
         private void OnLogoutClicked(object sender, System.EventArgs e)
         {
             Preferences.Remove("userId");
-
-            // возвращаем пользователя к странице входа
             var dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
             Application.Current.MainPage = new NavigationPage(new LoginPage());
         }

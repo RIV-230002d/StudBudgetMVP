@@ -6,6 +6,7 @@ using StudBudgetMVP.Models;
 using StudBudgetMVP.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +19,18 @@ namespace StudBudgetMVP.ViewModels
         public DateTime Date { get; init; }
         public decimal Amount { get; init; }
         public string CategoryName { get; init; }
+        public bool IsIncome { get; init; }
+
+        public string FormattedAmount
+        {
+            get
+            {
+                var str = Math.Abs(Amount).ToString("C", CultureInfo.CreateSpecificCulture("ru-RU"));
+                return IsIncome ? $"+{str}" : str;
+            }
+        }
+
+        public Color AmountColor => IsIncome ? Colors.Green : Colors.Black;
     }
 
     public class CategoryFilterItem : ObservableObject
@@ -52,76 +65,66 @@ namespace StudBudgetMVP.ViewModels
             ToggleCategoryFilterCommand = new RelayCommand(ToggleCategoryFilters);
             ResetFiltersCommand = new RelayCommand(ResetFilters);
 
-            // Фильтры по умолчанию:
             var now = DateTime.Now;
             DateFrom = new DateTime(now.Year, now.Month, 1);
             DateTo = new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month));
         }
 
-        // коллекции
         public ObservableCollection<Category> Categories { get; }
         public ObservableCollection<TxDisplay> Transactions { get; }
         public ObservableCollection<CategoryFilterItem> CategoryFilters { get; }
 
-        // выбранные / вводимые данные
         [ObservableProperty] private Category selectedCategory;
         [ObservableProperty] private string rubles = string.Empty;
-        [ObservableProperty] private string kopeks = string.Empty;   // ← пусто вместо «0»
+        [ObservableProperty] private string kopeks = string.Empty;
         [ObservableProperty] private TxDisplay selectedTransaction;
 
-        // фильтры
         [ObservableProperty] private bool areFiltersVisible;
         [ObservableProperty] private bool areCategoryFiltersVisible;
 
         [ObservableProperty] private DateTime dateFrom;
         [ObservableProperty] private DateTime dateTo;
 
-        // команды
         public IAsyncRelayCommand AddCommand { get; }
         public IAsyncRelayCommand<TxDisplay> DeleteTransactionCommand { get; }
         public RelayCommand ToggleFiltersCommand { get; }
         public RelayCommand ToggleCategoryFilterCommand { get; }
         public RelayCommand ResetFiltersCommand { get; }
 
-        // Отфильтрованный список транзакций
         public ObservableCollection<TxDisplay> FilteredTransactions { get; } = new();
 
-        // ---------- загрузка ----------
         public async Task LoadAsync()
         {
             var userId = Preferences.Get("userId", 0);
             var now = DateTime.Now;
 
-            // категории
             Categories.Clear();
             foreach (var c in await data.GetCategoriesAsync(userId))
                 Categories.Add(c);
 
-            // категории для фильтра
             CategoryFilters.Clear();
             foreach (var c in Categories)
                 CategoryFilters.Add(new CategoryFilterItem { Name = c.Name, CategoryId = c.Id, IsChecked = true });
 
-            // транзакции -> проекция + сортировка DESC
-            var catDict = Categories.ToDictionary(c => c.Id, c => c.Name);
             var txs = await data.GetTransactionsAsync(userId, now.Year, now.Month);
 
             Transactions.Clear();
             foreach (var t in txs.OrderByDescending(t => t.Date))
             {
+                var cat = Categories.FirstOrDefault(c => c.Id == t.CategoryId);
                 Transactions.Add(new TxDisplay
                 {
                     Id = t.Id,
                     Date = t.Date,
                     Amount = t.Amount,
-                    CategoryName = catDict.TryGetValue(t.CategoryId, out var n) ? n : $"ID {t.CategoryId}"
+                    CategoryName = cat?.Name ?? $"ID {t.CategoryId}",
+                    IsIncome = cat?.IsIncome ?? false
                 });
             }
 
             ApplyFilters();
         }
 
-        // ---------- валидация для кнопки ----------
         private bool CanAdd()
         {
             var kopValid = string.IsNullOrWhiteSpace(Kopeks) || int.TryParse(Kopeks, out var k) && k >= 0 && k < 100;
@@ -134,7 +137,6 @@ namespace StudBudgetMVP.ViewModels
         partial void OnKopeksChanged(string _, string __) => AddCommand.NotifyCanExecuteChanged();
         partial void OnSelectedTransactionChanged(TxDisplay _, TxDisplay __) => DeleteTransactionCommand.NotifyCanExecuteChanged();
 
-        // ---------- добавить ----------
         private async Task AddAsync()
         {
             try
@@ -143,7 +145,6 @@ namespace StudBudgetMVP.ViewModels
 
                 decimal rub = decimal.Parse(Rubles);
                 int kop = string.IsNullOrWhiteSpace(Kopeks) ? 0 : int.Parse(Kopeks);
-
                 var amount = rub + kop / 100m;
 
                 var tx = new Transaction
@@ -168,7 +169,6 @@ namespace StudBudgetMVP.ViewModels
             }
         }
 
-        // ---------- удалить ----------
         private async Task DeleteAsync(TxDisplay tx)
         {
             if (tx == null) return;
@@ -176,7 +176,6 @@ namespace StudBudgetMVP.ViewModels
             await LoadAsync();
         }
 
-        // ---------- фильтры ----------
         private void ToggleFilters() => AreFiltersVisible = !AreFiltersVisible;
         private void ToggleCategoryFilters() => AreCategoryFiltersVisible = !AreCategoryFiltersVisible;
 
@@ -195,7 +194,7 @@ namespace StudBudgetMVP.ViewModels
         partial void OnDateFromChanged(DateTime oldValue, DateTime newValue) => ApplyFilters();
         partial void OnDateToChanged(DateTime oldValue, DateTime newValue) => ApplyFilters();
 
-        partial void OnAreCategoryFiltersVisibleChanged(bool oldValue, bool newValue) { /* Nothing */ }
+        partial void OnAreCategoryFiltersVisibleChanged(bool oldValue, bool newValue) { }
         partial void OnAreFiltersVisibleChanged(bool oldValue, bool newValue)
         {
             if (!newValue) ApplyFilters();
@@ -205,7 +204,7 @@ namespace StudBudgetMVP.ViewModels
         {
             var activeCategories = CategoryFilters.Where(cf => cf.IsChecked).Select(cf => cf.CategoryId).ToHashSet();
             var from = DateFrom.Date;
-            var to = DateTo.Date.AddDays(1).AddTicks(-1); // включительно до конца дня
+            var to = DateTo.Date.AddDays(1).AddTicks(-1);
 
             var filtered = Transactions.Where(t =>
                 activeCategories.Contains(Categories.FirstOrDefault(c => c.Name == t.CategoryName)?.Id ?? -1) &&

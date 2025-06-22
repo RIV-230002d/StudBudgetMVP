@@ -5,9 +5,16 @@
        x:Class="StudBudgetMVP.AppShell">
 
     <!-- =========== ОСНОВНОЕ МЕНЮ =========== -->
-    <FlyoutItem Title="Транзакции"
+    <FlyoutItem Title="Главная"
                 FlyoutDisplayOptions="AsMultipleItems">
-        <ShellContent Title="Транзакции"
+        <ShellContent Title="Главная"
+                      ContentTemplate="{DataTemplate views:HomePage}"
+                      Route="home" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Операции"
+                FlyoutDisplayOptions="AsMultipleItems">
+        <ShellContent Title="Операции"
                       ContentTemplate="{DataTemplate views:TransactionsPage}"
                       Route="transactions" />
     </FlyoutItem>
@@ -17,6 +24,13 @@
         <ShellContent Title="Бюджет"
                       ContentTemplate="{DataTemplate views:BudgetPage}"
                       Route="budget" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Профиль"
+                FlyoutDisplayOptions="AsMultipleItems">
+        <ShellContent Title="Профиль"
+                      ContentTemplate="{DataTemplate views:ProfilePage}"
+                      Route="profile" />
     </FlyoutItem>
 
     <!-- =========== КНОПКА ВЫХОДА (внизу меню) =========== -->

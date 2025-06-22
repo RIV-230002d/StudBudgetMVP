@@ -132,10 +132,9 @@
                                     <Frame Padding="5" BorderColor="#8A8A8A" Margin="0,3">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <VerticalStackLayout>
-                                                <Label Text="{Binding Name}" />
-                                                <Label Text="{Binding Total, StringFormat='Доход: {0:C}'}"
-                                                       FontSize="Small"
-                                                       TextColor="Green"/>
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                                <Label FontSize="Small" TextColor="Green"
+                                                       Text="{Binding Total, StringFormat='Доход: {0:C}'}" />
                                             </VerticalStackLayout>
 
                                             <Button Grid.Column="1"
@@ -178,24 +177,16 @@
 
                                         <Grid ColumnDefinitions="*,Auto">
                                             <VerticalStackLayout>
-                                                <Label Text="{Binding Name}" />
-                                                <Label Text="{Binding Limit, StringFormat='Лимит: {0:C}'}"
-                                                       FontSize="Small"
-                                                       TextColor="DarkGray" />
-                                                <Label Text="{Binding Total, StringFormat='Фактический расход: {0:C}'}"
-                                                       FontSize="Small">
-                                                    <Label.Style>
-                                                        <Style TargetType="Label">
-                                                            <Setter Property="TextColor" Value="Black"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsOverspent}"
-                                                                             Value="True"
-                                                                             TargetType="Label">
-                                                                    <Setter Property="TextColor" Value="Red"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Label.Style>
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                                <Label FontSize="Small">
+                                                    <Label.FormattedText>
+                                                        <FormattedString>
+                                                            <Span Text="Потрачено " />
+                                                            <Span Text="{Binding Total, StringFormat='{0:C}'}" FontAttributes="Bold" />
+                                                            <Span Text=" из " />
+                                                            <Span Text="{Binding Limit, StringFormat='{0:C}'}" />
+                                                        </FormattedString>
+                                                    </Label.FormattedText>
                                                 </Label>
                                             </VerticalStackLayout>
 

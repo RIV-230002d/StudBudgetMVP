@@ -38,24 +38,23 @@ namespace StudBudgetMVP.Services
               .Where(u => u.Username == username && u.Password == password)
               .FirstOrDefaultAsync();
 
+        // ---------- новое: получить пользователя по id ----------
+        public Task<User?> GetUserByIdAsync(int userId)
+            => db.Table<User>().Where(u => u.Id == userId).FirstOrDefaultAsync();
+
         // ---------- категории ----------
         public Task<List<Category>> GetCategoriesAsync(int userId) =>
             db.Table<Category>().Where(c => c.UserId == userId).ToListAsync();
 
         public Task AddCategoryAsync(Category cat) => db.InsertAsync(cat);
 
-        /// <summary>Удаляем категорию и все её транзакции.</summary>
         public async Task DeleteCategoryAsync(int catId)
         {
-            // 1) каскадно убираем транзакции
             await db.ExecuteAsync("DELETE FROM [Transaction] WHERE CategoryId = ?", catId);
-
-            // 2) удаляем саму категорию
             await db.DeleteAsync<Category>(catId);
         }
 
         // ---------- транзакции ----------
-        // выборка за месяц (диапазоном дат)
         public async Task<List<Transaction>> GetTransactionsAsync(int userId, int year, int month)
         {
             var monthStart = new DateTime(year, month, 1);

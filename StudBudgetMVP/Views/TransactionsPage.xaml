@@ -5,23 +5,19 @@
              Title="Транзакции">
 
     <AbsoluteLayout>
-
         <ScrollView>
             <VerticalStackLayout Padding="20" Spacing="15">
 
                 <!-- ===== ФОРМА ДОБАВЛЕНИЯ ТРАНЗАКЦИИ ===== -->
                 <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15">
                     <VerticalStackLayout Spacing="12">
-
                         <Label Text="Добавить транзакцию"
                                FontAttributes="Bold"
                                TextColor="Gray"/>
-
                         <Picker Title="Категория"
                                 ItemsSource="{Binding Categories}"
                                 ItemDisplayBinding="{Binding Name}"
                                 SelectedItem="{Binding SelectedCategory}" />
-
                         <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="6">
                             <Entry Grid.Column="0"
                                    Placeholder="руб"
@@ -34,7 +30,6 @@
                                    MaxLength="2"
                                    Text="{Binding Kopeks}" />
                         </Grid>
-
                         <Button Text="Добавить" Command="{Binding AddCommand}" />
                     </VerticalStackLayout>
                 </Frame>
@@ -42,9 +37,7 @@
                 <!-- ===== ФИЛЬТРЫ + СПИСОК ТРАНЗАКЦИЙ ===== -->
                 <Frame BorderColor="#8A8A8A" CornerRadius="12" Padding="15" Margin="0,15,0,0">
                     <VerticalStackLayout Spacing="10">
-
-                        <Button Text="Фильтры"
-                                Command="{Binding ToggleFiltersCommand}" />
+                        <Button Text="Фильтры" Command="{Binding ToggleFiltersCommand}" />
 
                         <!-- СПИСОК ТРАНЗАКЦИЙ -->
                         <CollectionView ItemsSource="{Binding FilteredTransactions}" SelectionMode="None">
@@ -52,9 +45,10 @@
                                 <DataTemplate>
                                     <Frame Padding="8,6" Margin="0,5">
                                         <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="120,*,Auto" ColumnSpacing="6">
-                                            <!-- Первая строка: сумма (фикс. ширина), дата, кнопка -->
+                                            <!-- сумма -->
                                             <Label Grid.Row="0" Grid.Column="0"
-                                                   Text="{Binding Amount, StringFormat='{}{0:C}'}"
+                                                   Text="{Binding FormattedAmount}"
+                                                   TextColor="{Binding AmountColor}"
                                                    FontAttributes="Bold"
                                                    VerticalOptions="Center"
                                                    HorizontalTextAlignment="Start"
@@ -74,7 +68,6 @@
                                                     HeightRequest="32"
                                                     Command="{Binding BindingContext.DeleteTransactionCommand, Source={x:Reference root}}"
                                                     CommandParameter="{Binding .}" />
-                                            <!-- Вторая строка: категория -->
                                             <Label Grid.Row="1" Grid.Column="0"
                                                    Grid.ColumnSpan="3"
                                                    Text="{Binding CategoryName}"
@@ -99,11 +92,8 @@
             <Grid VerticalOptions="Center" HorizontalOptions="Center">
                 <Frame BorderColor="#cccccc" BackgroundColor="White" CornerRadius="16" Padding="20" WidthRequest="350">
                     <VerticalStackLayout Spacing="15">
-
-                        <!-- 1. КНОПКА "Категории" -->
                         <Button Text="Категории"
                                 Command="{Binding ToggleCategoryFilterCommand}" />
-
                         <Frame IsVisible="{Binding AreCategoryFiltersVisible}" Padding="10,0" BorderColor="#cccccc">
                             <VerticalStackLayout Spacing="5">
                                 <CollectionView ItemsSource="{Binding CategoryFilters}" SelectionMode="None">
@@ -119,22 +109,14 @@
                             </VerticalStackLayout>
                         </Frame>
 
-                        <!-- 2. СТРОКА с подписями "Дата от" и "Дата до", "Дата до" выравнена влево у правого пикера -->
-                        <Grid ColumnDefinitions="*,*" Margin="0,0,0,0">
+                        <Grid ColumnDefinitions="*,*">
                             <Label Text="Дата от" Grid.Column="0" HorizontalTextAlignment="Start"/>
                             <Label Text="Дата до" Grid.Column="1" HorizontalTextAlignment="Start"/>
                         </Grid>
-
-                        <!-- Два DatePicker в строку -->
                         <Grid ColumnDefinitions="*,*" Margin="0,-10,0,0">
-                            <DatePicker Date="{Binding DateFrom, Mode=TwoWay}"
-                                        Grid.Column="0"
-                                        Format="dd.MM.yyyy" />
-                            <DatePicker Date="{Binding DateTo, Mode=TwoWay}"
-                                        Grid.Column="1"
-                                        Format="dd.MM.yyyy" />
+                            <DatePicker Date="{Binding DateFrom, Mode=TwoWay}" Grid.Column="0" Format="dd.MM.yyyy" />
+                            <DatePicker Date="{Binding DateTo, Mode=TwoWay}" Grid.Column="1" Format="dd.MM.yyyy" />
                         </Grid>
-
                         <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
                             <Button Text="Сброс" Command="{Binding ResetFiltersCommand}" />
                             <Button Text="OK" Command="{Binding ToggleFiltersCommand}" />

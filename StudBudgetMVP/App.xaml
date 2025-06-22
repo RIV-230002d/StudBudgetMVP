@@ -14,6 +14,9 @@
             <conv:BoolIncomeExpenseConverter  x:Key="BoolIncomeExpenseConverter"/>
             <conv:IncomeExpenseColorConverter x:Key="IncomeExpenseColorConverter"/>
 
+            <conv:AmountPrefixConverter x:Key="AmountPrefixConverter"/>
+            <conv:AmountColorConverter x:Key="AmountColorConverter"/>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>
